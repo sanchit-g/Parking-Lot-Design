@@ -21,6 +21,9 @@ public class ParkingLot {
     // Track active tickets
     private final Map<String, ParkingTicket> activeTickets;
 
+    // How many times to retry before giving up
+    private final int MAX_RETRIES = 3;
+
     private ParkingLot() {
         levels = new ArrayList<>();
         activeTickets = new ConcurrentHashMap<>();
@@ -38,24 +41,38 @@ public class ParkingLot {
         levels.add(level);
     }
 
-    public synchronized ParkingTicket parkVehicle(Vehicle vehicle) {
-        // Find a spot using Strategy
-        Optional<ParkingSpot> spotOpt = parkingStrategy.findSpot(levels, vehicle);
+    public ParkingTicket parkVehicle(Vehicle vehicle) {
+        int attempts = 0;
 
-        if (spotOpt.isPresent()) {
-            ParkingSpot spot = spotOpt.get();
+        while (attempts < MAX_RETRIES) {
+            // Find a candidate spot using Strategy
+            Optional<ParkingSpot> spotOpt = parkingStrategy.findSpot(levels, vehicle);
 
-            if (spot.assignVehicle(vehicle)) {
-                // Generate ticket
-                ParkingTicket ticket = new ParkingTicket(
-                        vehicle.getLicensePlate(),
-                        spot.getId(),
-                        findFloorForSpot(spot)
-                );
-                activeTickets.put(ticket.getTicketId(), ticket);
-                System.out.println("Vehicle: " + vehicle.getLicensePlate() + " parked successfully, ticket ID: " + ticket.getTicketId());
-                return ticket;
+            if (spotOpt.isPresent()) {
+                ParkingSpot spot = spotOpt.get();
+
+                // Try to lock and park
+                // If this returns true, we own the spot.
+                if (spot.assignVehicle(vehicle)) {
+                    // Generate ticket
+                    ParkingTicket ticket = new ParkingTicket(
+                            vehicle.getLicensePlate(),
+                            spot.getId(),
+                            findFloorForSpot(spot)
+                    );
+                    activeTickets.put(ticket.getTicketId(), ticket);
+                    System.out.println("Vehicle: " + vehicle.getLicensePlate() + " parked successfully, ticket ID: " + ticket.getTicketId());
+                    return ticket;
+                }
+
+                // If assignVehicle returned false, it means another thread stole the spot
+                // We increment attempts and LOOP again to find the NEXT available spot.
+                System.out.println("Contention detected for " + vehicle.getLicensePlate() + ". Retrying...");
+            } else {
+                // Strategy returned empty. Parking lot is genuinely full.
+                break;
             }
+            attempts++;
         }
 
         throw new RuntimeException("Parking full or No suitable spot found!");
