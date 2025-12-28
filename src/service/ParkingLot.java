@@ -42,22 +42,33 @@ public class ParkingLot {
     }
 
     public ParkingTicket parkVehicle(Vehicle vehicle) {
+        // Find a candidate spot
         Optional<ParkingSpot> spotOpt = parkingStrategy.findSpot(levels, vehicle);
 
         if (spotOpt.isPresent()) {
             ParkingSpot spot = spotOpt.get();
-            spot.assignVehicle(vehicle);
 
-            ParkingTicket ticket = new ParkingTicket(
-                    vehicle.getLicensePlate(),
-                    spot.getId(),
-                    findFloorForSpot(spot)
-            );
+            // Attempt to park the vehicle
+            boolean isParked = spot.assignVehicle(vehicle);
 
-            activeTickets.put(ticket.getTicketId(), ticket);
-            System.out.println("Vehicle " + vehicle.getLicensePlate() + " parked. Ticket: " + ticket.getTicketId());
+            if (isParked) {
+                ParkingTicket ticket = new ParkingTicket(
+                        vehicle.getLicensePlate(),
+                        spot.getId(),
+                        findFloorForSpot(spot)
+                );
 
-            return ticket;
+                activeTickets.put(ticket.getTicketId(), ticket);
+                System.out.println("Vehicle " + vehicle.getLicensePlate() + " parked. Ticket: " + ticket.getTicketId());
+
+                return ticket;
+            } else {
+                // If false, it means the Strategy found a spot, but someone stole it
+                // before we could lock it.
+                // For NaturalOrderStrategy, this happens often.
+                // For OptimizedStrategy (Queue), this should theoretically never happen.
+                System.err.println("Contention detected for " + vehicle.getLicensePlate() + ". Spot was stolen!");
+            }
         }
 
         throw new RuntimeException("No spots available for type: " + vehicle.getType());
