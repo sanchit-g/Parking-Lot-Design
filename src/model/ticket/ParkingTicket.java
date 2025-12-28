@@ -30,6 +30,10 @@ public class ParkingTicket {
         return ticketId;
     }
 
+    public String getLicensePlate() {
+        return licensePlate;
+    }
+
     @Override
     public String toString() { return "Ticket ID: " + ticketId + " | Spot: " + floorNumber + "-" + spotId; }
 }

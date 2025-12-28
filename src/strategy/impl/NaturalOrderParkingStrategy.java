@@ -20,4 +20,16 @@ public class NaturalOrderParkingStrategy implements ParkingAssignmentStrategy {
         }
         return Optional.empty();
     }
+
+    @Override
+    public void indexSpots(List<ParkingLevel> levels) {
+        // This strategy is stateless. It reads the "live" state of the list
+        // every time findSpot() is called. It does not need to build an index.
+        // Hence, nothing needs to be done here
+    }
+
+    @Override
+    public void returnSpot(ParkingSpot spot) {
+        // Nothing needs to be done here
+    }
 }

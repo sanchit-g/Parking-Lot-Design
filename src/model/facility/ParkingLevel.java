@@ -17,8 +17,8 @@ public class ParkingLevel {
         double spotRatio = numSpots;
         for (int i = 0; i < numSpots; i++) {
             VehicleType type = VehicleType.CAR;
-            if (i < spotRatio * 0.25) type = VehicleType.MOTORCYCLE;
-            else if (i > spotRatio * 0.75) type = VehicleType.TRUCK;
+//            if (i < spotRatio * 0.25) type = VehicleType.MOTORCYCLE;
+//            else if (i > spotRatio * 0.75) type = VehicleType.TRUCK;
             spots.add(new ParkingSpot(i, type));
         }
     }

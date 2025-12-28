@@ -46,7 +46,7 @@ public class ParkingExecution {
 
         // Give the executor a moment to initialize all threads
         try {
-            Thread.sleep(100);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
